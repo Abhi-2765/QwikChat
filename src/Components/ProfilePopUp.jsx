@@ -2,21 +2,16 @@ import React, { useState } from 'react';
 import defUser from '../assets/default.png';
 import nature from '../assets/nature.jpg';
 
-const ProfilePopUp = () => {
-  const [isOpen, setIsOpen] = useState(true); // State to manage popup visibility
-
-  const closePopup = () => setIsOpen(false); // Function to close the popup
-
-  if (!isOpen) return null; // If popup is not open, render nothing
+const ProfilePopUp = (props) => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50"
-      onClick={closePopup} // Close popup when clicking on the background
+      className="fixed inset-0 flex justify-center items-start bg-black bg-opacity-50 z-50"
+      onClick={props.onClose}
     >
       <div
-        className="bg-blue-950 text-white shadow-lg max-w-sm w-full p-4 relative"
-        onClick={(e) => e.stopPropagation()} // Prevent background click from closing popup
+        className="bg-blue-950 text-white shadow-lg max-w-sm w-full p-4 relative mt-5"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Profile Section */}
         <div className="text-center mb-6">
@@ -43,7 +38,7 @@ const ProfilePopUp = () => {
             </span>
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Hey there! I’m Friend using QwikChat.
+            Hey there! I'm Friend using QwikChat.
           </p>
         </div>
 
@@ -104,6 +99,10 @@ const ProfilePopUp = () => {
               alt="Media"
             />
           </div>
+        </div>
+
+        <div className='flex justify-center items-center mt-4'>
+          <button className='bg-blue-700 px-4 py-2 hover:bg-blue-600'>Remove User</button>
         </div>
       </div>
     </div>

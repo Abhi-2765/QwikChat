@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import defUser from '../assets/default.png';
 import nature from '../assets/nature.jpg';
 import ProfilePopUp from './ProfilePopUp';
 
 const Chatbox = () => {
 
+  const [showPopUp, setShowPopUp] = useState(false);
+
   return (
     <div className="h-screen relative bg-blue-200 flex flex-col">
       {/* Chat Header */}
-      <div className="px-4 py-3 flex items-center gap-3 border-b bg-blue-300 shadow-sm cursor-pointer" >
+      <div className="px-4 py-3 flex items-center gap-3 border-b bg-blue-300 shadow-sm cursor-pointer" onClick={()=>{setShowPopUp(true)}}>
         <img
           className="w-12 h-12 rounded-full border-2 border-gray-300"
           src={defUser}
@@ -28,6 +30,8 @@ const Chatbox = () => {
           />
         </svg>
       </div>
+
+      {showPopUp && <ProfilePopUp onClose={()=>{setShowPopUp(false)}}/>}
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-scroll px-4 py-2 bg-blue-100">
