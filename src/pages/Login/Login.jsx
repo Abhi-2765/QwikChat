@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Icon from '../../assets/profile2.svg';
 import { useForm } from "react-hook-form";
+import { signup, login } from '../../Config/firebase';
+import { toast, ToastContainer } from "react-toastify";
 
 const Login = () => {
   const [currState, setCurrState] = useState("Sign Up");
@@ -11,21 +13,37 @@ const Login = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  // Submit Function
-  async function Submit(data) {
-    await new Promise((resolve) => setTimeout(resolve, 3000)); 
-    console.log("Submitted data:", data);
-  }
+  // Not req as react hook form handlesub gives all data to Submit func
+  const [userName, setUserName] = useState("");
+  const [email, setEmail] = useState(""); 
+  const [password, setPassword] = useState(""); 
+
+    //Submit Func
+  const Submit = (data) => {
+    if (currState === "Sign Up") {
+      signup(data.UserName, data.email, data.password);
+      console.log("Login submitted", data);
+    } else {
+      login(data.email, data.password);
+      console.log("Login submitted", data);
+    }
+  };
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-evenly h-screen w-screen bg-gradient-to-br from-blue-800 via-blue-600 to-pink-400">
+    <div className="flex flex-col md:flex-row items-center justify-evenly h-screen w-screen bg-gradient-to-br from-blue-600 via-blue-400 to-pink-300">
       {/* Icon */}
+
+      {/* Toastify err */}
+      <div className="App">
+        < ToastContainer />
+      </div>
+
       <img className="w-[30%] max-w-[300px] mb-8 md:mb-0" src={Icon} alt="icon" />
 
       {/* Form */}
       <form
         className="flex flex-col items-center gap-6 bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md"
-        onSubmit={handleSubmit(Submit)}
+        onSubmit={handleSubmit(Submit)} // Correct handling of Submit
       >
         <h1 className="font-bold text-xl">{currState}</h1>
 
@@ -46,6 +64,8 @@ const Login = () => {
                 },
               })}
               placeholder="Username"
+              onChange={(e) => setUserName(e.target.value)}
+              value={userName}
             />
             {errors.UserName && (
               <p className="text-red-500 text-sm mt-1">{errors.UserName.message}</p>
@@ -66,6 +86,8 @@ const Login = () => {
                 message: "Enter a valid email",
               },
             })}
+            onChange={(e) => setEmail(e.target.value)}
+            value={email}
           />
           {errors.email && (
             <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
@@ -82,17 +104,25 @@ const Login = () => {
               required: "Password is required",
               minLength: {
                 value: 8,
-                message: "Password must be at least 6 characters",
+                message: "Password must be at least 8 characters",
               },
-              pattern:{
+              pattern: {
                 value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/,
-                message: 'Password must contain uppercase letters,lowercase letters, numbers, special characters'
-              }
+                message:
+                  "Password must contain uppercase letters, lowercase letters, numbers, and special characters",
+              },
             })}
+            onChange={(e) => setPassword(e.target.value)}
+            value={password}
           />
           {errors.password && (
             <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
           )}
+
+          {/* make it work */}
+          {/* {
+            errors.password && toast.error(errors.password.message)
+          } */}
         </div>
 
         {/* Terms Checkbox for Sign Up */}
@@ -121,7 +151,7 @@ const Login = () => {
           {isSubmitting ? "Submitting..." : "Submit"}
         </button>
 
-        {/* Submit */}
+        {/* Toggle Login/Sign Up */}
         <p className="text-sm">
           {currState === "Sign Up"
             ? "Already have an account?"

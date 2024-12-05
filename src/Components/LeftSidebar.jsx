@@ -1,8 +1,17 @@
 import React from 'react';
 import logo from '../assets/profile2.svg';
 import defUser from '../assets/default.png';
+import { logout } from '../Config/firebase';
+import { useNavigate } from 'react-router-dom';
 
 const LeftSidebar = () => {
+
+  const nav = useNavigate();
+
+  const profileClick = ()=> {
+    nav('/profile');
+  }
+
   return (
     <div className="bg-[#001030] text-white h-screen max-w-[20vw] flex flex-col overflow-hidden">
       {/* Header Section */}
@@ -32,9 +41,9 @@ const LeftSidebar = () => {
 
             {/* Dropdown Menu */}
             <div className="absolute top-[100%] right-0 hidden group-hover:block w-[200px] p-3 rounded-sm bg-blue-200 text-black shadow-lg z-10">
-              <p className="cursor-pointer text-[15px] hover:font-bold">Edit Profile</p>
+              <p className="cursor-pointer text-[15px] hover:font-bold" onClick={profileClick}>Edit Profile</p>
               <hr className="border-gray-300 my-2" />
-              <p className="cursor-pointer text-[15px] hover:font-bold">Logout</p>
+              <p className="cursor-pointer text-[15px] hover:font-bold" onClick={()=>logout()}>Logout</p>
             </div>
           </div>
         </div>

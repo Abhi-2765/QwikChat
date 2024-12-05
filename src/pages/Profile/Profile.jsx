@@ -1,7 +1,13 @@
-import React, { useState } from 'react'; // Importing useState
-import { useForm } from 'react-hook-form'; // Importing useForm from react-hook-form
+import React, { useContext, useEffect, useState } from 'react'; 
+import { useForm } from 'react-hook-form';
 import defUser from '../../assets/default.png';
 import Icon from '../../assets/profile2.svg';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { auth, db } from '../../Config/firebase';
+import { toast } from 'react-toastify';
+import { AppContext } from '../../Context/AppContext';
 
 const Profile = () => {
   const {
@@ -9,18 +15,58 @@ const Profile = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm();
+  
+  const nav = useNavigate();
+  const [image, setImage] = useState(null); 
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [uid, setUid] = useState("");
+  const {setUserData} = useContext(AppContext);
 
-  const [image, setImage] = useState(null); // State to handle profile image
+  useEffect(()=>{
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        setUid(user.uid);
+        const docReference = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docReference);
 
-  const onSubmit = (data) => {
-    console.log(data); // Log submitted data
+        if( docSnap.data().name){
+          setName( docSnap.data().name);
+        }
+        if( docSnap.data().bio){
+          setBio( docSnap.data().bio);
+        }
+      }
+      else{
+        nav('/');
+      }
+    })
+  }, [])
+
+  //OnSubmit
+  const onSubmit = async () => {
+    try {
+      const docReference = doc(db, 'users', uid);
+      await updateDoc(docReference,{
+        bio: bio,
+        name: name
+      })
+
+      const snap = await getDoc(docReference);
+      setUserData(snap.data());
+      console.log(snap.data());
+      nav('/chat')
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-800 via-blue-600 to-pink-400 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-lg">
+    <div className="min-h-screen bg-gradient-to-br from-blue-800 via-blue-600 to-pink-400 filter brightness-75 contrast-90 sepia-30 flex items-center justify-center px-4">
+      <div className="bg-blue-100 rounded-lg shadow-xl overflow-hidden w-full max-w-lg">
         {/* Header Section */}
-        <div className="bg-blue-500 text-white py-4 px-6 text-center">
+        <div className="bg-[#001030] text-white py-4 px-6 text-center">
           <div className="flex justify-center items-center">
             <img src={Icon} alt="QwikChat Logo" className="w-10 h-10 mr-3" />
             <span className="text-2xl font-semibold">QwikChat</span>
@@ -36,9 +82,10 @@ const Profile = () => {
 
           {/* Profile Image Upload */}
           <div className="flex flex-col items-center gap-2">
+            {/* How?? */}
             <label htmlFor="image" className="relative cursor-pointer group">
               <img
-                src={image ? URL.createObjectURL(image) : defUser} // Dynamically show selected image or default
+                src={image ? URL.createObjectURL(image) : defUser} // Show curr or def img
                 alt="Default User"
                 className="w-24 h-24 rounded-full border-4 border-gray-300 group-hover:border-blue-500 transition-all"
               />
@@ -50,9 +97,9 @@ const Profile = () => {
               type="file"
               id="image"
               className="hidden"
-              accept="image/*" // Accept only image files
+              accept="image/*"
               {...register('image')}
-              onChange={(e) => setImage(e.target.files[0])} // Update image state
+              onChange={(e) => setImage(e.target.files[0])} // Explain
             />
           </div>
 
@@ -63,8 +110,8 @@ const Profile = () => {
               {...register('UserName', {
                 required: 'Username is required',
                 minLength: {
-                  value: 6,
-                  message: 'Must be at least 6 characters',
+                  value: 4,
+                  message: 'Must be at least 4 characters',
                 },
                 maxLength: {
                   value: 15,
@@ -72,6 +119,8 @@ const Profile = () => {
                 },
               })}
               placeholder="Your Name"
+              onChange={(e)=>setName(e.target.value)}
+              value={name}
             />
             {errors.UserName && (
               <p className="text-red-500 text-sm mt-1">
@@ -84,13 +133,12 @@ const Profile = () => {
           <div>
             <textarea
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              {...register('bio', { required: 'Bio is required' })}
+              {...register('bio')}
               placeholder="Write a short bio about yourself..."
               rows="4"
+              onChange={(e)=>setBio(e.target.value)}
+              value={bio}
             ></textarea>
-            {errors.bio && (
-              <p className="text-red-500 text-sm mt-1">{errors.bio.message}</p>
-            )}
           </div>
 
           {/* Submit Button */}
