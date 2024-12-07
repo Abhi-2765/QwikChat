@@ -1,16 +1,109 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import logo from '../assets/profile2.svg';
 import defUser from '../assets/default.png';
-import { logout } from '../Config/firebase';
+import { db, logout } from '../Config/firebase';
 import { useNavigate } from 'react-router-dom';
+import { arrayUnion, collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import {AppContext} from '../Context/AppContext.jsx'
+import { toast } from 'react-toastify';
 
 const LeftSidebar = () => {
-
   const nav = useNavigate();
+  const {userData, chatData, chatUser, setChatUser, setMessagesId, messagesId} = useContext(AppContext);
+  const [user, setUser] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
 
-  const profileClick = ()=> {
-    nav('/profile');
+
+  // Search Bar
+
+  const inputHandler = async (e) => {
+    try {
+      const input = e.target.value.trim();
+      if (input) {
+        setShowSearch(true);
+        const userRef = collection(db, 'users');
+        const q = query(userRef, where('username', '==', input.toLowerCase()));
+        const querySnap = await getDocs(q);
+  
+        if (!querySnap.empty) {
+          const queriedUser = querySnap.docs[0];
+
+          if (queriedUser.id !== userData.id) {
+            let userExist = false;
+            chatData.map((user) => {
+              if(user.rId === queriedUser.data().id){
+                userExist = true;
+              }
+            })
+
+            if(!userExist){
+              setUser(queriedUser.data());
+            }
+
+          } else {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+      } else {
+        setShowSearch(false);
+      }
+    } catch (error) {
+      console.error('Error searching for user:', error);
+    }
+  };
+  
+  // Add chat to firebase
+
+  const addChat = async () =>{
+    const msgRef = collection(db, "messages");
+    const chatsRef = collection(db, "chats");
+    try {
+      const newMessageRef = doc(msgRef);
+
+      await setDoc(newMessageRef, {
+        createAt: serverTimestamp(),
+        messages:[]
+      })
+
+      await updateDoc(doc(chatsRef, user.id),{
+        chatsData:arrayUnion({
+          messageId: newMessageRef.id,
+          lastMessage: "",
+          rId: userData.id,
+          updatedAt: Date.now(),
+          messageSeen:true,
+        })
+      })
+
+      await updateDoc(doc(chatsRef, userData.id),{
+        chatsData:arrayUnion({
+          messageId: newMessageRef.id,
+          lastMessage: "",
+          rId: user.id,
+          updatedAt: Date.now(),
+          messageSeen:true,
+        })
+      })
+    } catch (error) {
+      toast.error(error.message);
+      console.log(error);
+    }
   }
+
+  // Set Chat Data
+
+  const setChat = async (item) => {
+    setMessagesId(item.messageId);
+    setChatUser(item);
+  }
+
+  // menu Click
+
+  const profileClick = () => {
+    nav('/profile');
+  };
 
   return (
     <div className="bg-[#001030] text-white h-screen max-w-[20vw] flex flex-col overflow-hidden">
@@ -41,9 +134,13 @@ const LeftSidebar = () => {
 
             {/* Dropdown Menu */}
             <div className="absolute top-[100%] right-0 hidden group-hover:block w-[200px] p-3 rounded-sm bg-blue-200 text-black shadow-lg z-10">
-              <p className="cursor-pointer text-[15px] hover:font-bold" onClick={profileClick}>Edit Profile</p>
+              <p className="cursor-pointer text-[15px] hover:font-bold" onClick={profileClick}>
+                Edit Profile
+              </p>
               <hr className="border-gray-300 my-2" />
-              <p className="cursor-pointer text-[15px] hover:font-bold" onClick={()=>logout()}>Logout</p>
+              <p className="cursor-pointer text-[15px] hover:font-bold" onClick={() => logout()}>
+                Logout
+              </p>
             </div>
           </div>
         </div>
@@ -66,6 +163,7 @@ const LeftSidebar = () => {
             type="text"
             placeholder="Search here..."
             className="bg-transparent text-white placeholder-gray-400 outline-none ml-3 w-full"
+            onChange={inputHandler}
           />
         </div>
 
@@ -73,27 +171,41 @@ const LeftSidebar = () => {
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-4">Friends</h2>
           <div className="space-y-2 overflow-y-scroll h-80 pr-2">
-            {/* Friend Item */}
-            {Array(12)
-              .fill("")
-              .map((_, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-2 bg-[#002670] rounded-lg hover:bg-gradient-to-br from-blue-800 via-blue-600 to-pink-400 hover:text-white transition"
-                >
-                  <img
-                    src={defUser}
-                    alt={`Friend ${index + 1}`}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div>
-                    <p className="font-medium">Friend {index + 1}</p>
-                    <span className="text-sm text-gray-400 hover:text-white">
-                      Hello, how are you?
-                    </span>
-                  </div>
+          {showSearch && user
+          ? (
+            <div className="flex items-center gap-3 p-2 bg-[#002670] rounded-lg hover:bg-gradient-to-br from-blue-800 via-blue-600 to-pink-400 hover:text-white transition" onClick={addChat}>
+              <img
+                src={defUser}
+                alt="Searched User"
+                className="w-10 h-10 rounded-full"
+              />
+              <div>
+                <p className="font-medium">{user.username}</p>
+                <span className="text-sm text-gray-400">{user.name}</span>
+              </div>
+            </div>
+          )
+         : (
+            chatData.map((item, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-2 bg-[#002670] rounded-lg hover:bg-gradient-to-br from-blue-800 via-blue-600 to-pink-400 hover:text-white transition"
+                onClick={()=>{setChat(item)}}
+              >
+                <img
+                  src={defUser}
+                  alt={`${index + 1}`}
+                  className="w-10 h-10 rounded-full"
+                />
+                <div>
+                  <p className="font-medium">{item.userData.name}</p>
+                  <span className="text-sm text-gray-400 hover:text-white">
+                    {item.lastMessage}
+                  </span>
                 </div>
-              ))}
+              </div>
+            ))
+        )}
           </div>
         </div>
       </div>

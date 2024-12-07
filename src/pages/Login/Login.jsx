@@ -55,8 +55,8 @@ const Login = () => {
               {...register("UserName", {
                 required: "Username is required",
                 minLength: {
-                  value: 6,
-                  message: "Must be at least 6 characters",
+                  value: 4,
+                  message: "Must be at least 4 characters",
                 },
                 maxLength: {
                   value: 15,

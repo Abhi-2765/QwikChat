@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import defUser from '../assets/default.png';
 import nature from '../assets/nature.jpg';
+import { AppContext } from '../Context/AppContext';
 
 const ProfilePopUp = (props) => {
+
+  const {userData, messagesId, chatUser, messages, setMessages} = useContext(AppContext) ;
 
   return (
     <div
@@ -21,7 +24,7 @@ const ProfilePopUp = (props) => {
             alt="User Profile"
           />
           <p className="text-lg font-bold mt-3 flex items-center justify-center gap-1">
-            Friend
+            {chatUser.userData.name}
             <span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -38,7 +41,7 @@ const ProfilePopUp = (props) => {
             </span>
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Hey there! I'm Friend using QwikChat.
+            {chatUser.userData.bio}
           </p>
         </div>
 
