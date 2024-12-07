@@ -1,23 +1,29 @@
-import React, { useContext, useEffect, useState } from 'react';
-import defUser from '../assets/default.png';
-import logo from '../../public/profile.svg';
-import nature from '../assets/nature.jpg';
-import ProfilePopUp from './ProfilePopUp';
-import { AppContext } from '../Context/AppContext';
-import { doc, onSnapshot, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
-import { db } from '../Config/firebase';
-import { toast } from 'react-toastify';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import defUser from "../assets/default.png";
+import logo from "../../public/profile.svg";
+import ProfilePopUp from "./ProfilePopUp";
+import { AppContext } from "../Context/AppContext";
+import { doc, onSnapshot, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import { db } from "../Config/firebase";
+import { toast } from "react-toastify";
 
 const Chatbox = () => {
   const { userData, messagesId, chatUser, messages, setMessages } = useContext(AppContext);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [showPopUp, setShowPopUp] = useState(false);
+
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     if (messagesId) {
-      const unSub = onSnapshot(doc(db, 'messages', messagesId), (res) => {
-        setMessages(res.data()?.messages.reverse() || []);
-        console.log(res.data()?.messages.reverse());
+      const unSub = onSnapshot(doc(db, "messages", messagesId), (res) => {
+        setMessages(res.data()?.messages || []);
       });
       return () => {
         unSub();
@@ -25,20 +31,24 @@ const Chatbox = () => {
     }
   }, [messagesId, setMessages]);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const sendMessage = async () => {
     try {
-      if (input && messagesId) {
-        await updateDoc(doc(db, 'messages', messagesId), {
+      if (input.trim() && messagesId) {
+        await updateDoc(doc(db, "messages", messagesId), {
           messages: arrayUnion({
             sId: userData.id,
-            text: input,
+            text: input.trim(),
             createdAt: new Date(),
           }),
         });
 
         const userIDs = [chatUser.rId, userData.id];
         for (const id of userIDs) {
-          const userChatsRef = doc(db, 'chats', id);
+          const userChatsRef = doc(db, "chats", id);
           const userChatsSnapshot = await getDoc(userChatsRef);
 
           if (userChatsSnapshot.exists()) {
@@ -61,20 +71,34 @@ const Chatbox = () => {
             }
           }
         }
-        setInput('');
+        setInput("");
       }
     } catch (error) {
       toast.error(`Error sending message: ${error.message}`);
     }
   };
 
+  const convertTimeStamp = (timestamp) => {
+    const date = timestamp.toDate();
+    const hour = date.getHours();
+    const min = date.getMinutes().toString().padStart(2, "0");
+    return hour > 12
+      ? `${hour - 12}:${min} PM`
+      : `${hour}:${min} AM`;
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  };
+  
+
   return chatUser ? (
     <div className="h-screen relative bg-blue-200 flex flex-col">
       <div
         className="px-4 py-3 flex items-center gap-3 border-b bg-blue-300 shadow-sm cursor-pointer"
-        onClick={() => {
-          setShowPopUp(true);
-        }}
+        onClick={() => setShowPopUp(true)}
       >
         <img
           className="w-12 h-12 rounded-full border-2 border-gray-300"
@@ -84,92 +108,51 @@ const Chatbox = () => {
         <p className="flex-1 font-semibold text-lg text-black">
           {chatUser?.userData?.name}
         </p>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="w-6 h-6 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 3c-4.31 0-8 3.033-8 7 0 2.024.978 3.825 2.499 5.085a3.478 3.478 0 0 1-.522 1.756.75.75 0 0 0 .584 1.143 5.976 5.976 0 0 0 3.936-1.108c.487.082.99.124 1.503.124 4.31 0 8-3.033 8-7s-3.69-7-8-7Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-2-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm5 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-            clipRule="evenodd"
-          />
-        </svg>
       </div>
 
       {showPopUp && <ProfilePopUp onClose={() => setShowPopUp(false)} />}
 
       <div className="flex-1 overflow-y-scroll px-4 py-2 bg-gray-100">
-
-        
-        {/* Sender's Text Message */}
-        <div className="flex justify-end gap-2 mb-4">
-          <div className="text-right">
-            <p className="bg-blue-500 text-white font-medium text-sm px-4 py-2 rounded-lg max-w-xs">
-              This is a message from the sender.
-            </p>
-            <p className="text-xs text-gray-400 mt-1">9:45 AM</p>
-          </div>
-          <img
-            className="w-8 h-8 rounded-full"
-            src={defUser}
-            alt="Sender"
-          />
-        </div>
-
-        {/* Sender's Image Message */}
-        <div className="flex justify-end gap-2 mb-4">
-          <div className="text-right">
-            <img
-              className="max-w-xs rounded-lg"
-              src={nature}
-              alt="Sender Image"
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`flex ${
+              msg.sId === userData.id ? "justify-end" : "justify-start"
+            } gap-2 mb-4`}
+          >
+            {msg.sId !== userData.id && (
+              <img
+                className="w-8 h-8 rounded-full"
+                src={defUser}
+                alt="Receiver"
               />
-            <p className="text-xs text-gray-400 mt-1">9:47 AM</p>
+            )}
+            <div className={`text-${msg.sId === userData.id ? "right" : "left"}`}>
+              <p
+                className={`${
+                  msg.sId === userData.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-300 text-black"
+                } font-medium text-sm px-4 py-2 rounded-lg max-w-xs`}
+              >
+                {msg.text}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {convertTimeStamp(msg.createdAt)}
+              </p>
+            </div>
+            {msg.sId === userData.id && (
+              <img
+                className="w-8 h-8 rounded-full"
+                src={defUser}
+                alt="Sender"
+              />
+            )}
           </div>
-              {/* Profile Pic */}
-          <img
-            className="w-8 h-8 rounded-full"
-            src={defUser}
-            alt="Sender"
-          />
-        </div>
-
-        {/* Receiver's Text Message */}
-        <div className="flex justify-start gap-2 mb-4">
-          <img
-            className="w-8 h-8 rounded-full"
-            src={defUser}
-            alt="Receiver"
-          />
-          <div className="text-left">
-            <p className="bg-gray-300 text-black font-medium text-sm px-4 py-2 rounded-lg max-w-xs">
-              This is a message from the receiver.
-            </p>
-            <p className="text-xs text-gray-400 mt-1">9:50 AM</p>
-          </div>
-        </div>
-
-        {/* Receiver's Image Message */}
-        <div className="flex justify-start gap-2 mb-4">
-          {/* Profile Pic */}
-          <img
-            className="w-8 h-8 rounded-full"
-            src={defUser}
-            alt="Receiver"
-          />
-          <div className="text-left">
-            <img
-              className="max-w-xs rounded-lg"
-              src={nature}
-              alt="Receiver Image"
-            />
-            <p className="text-xs text-gray-400 mt-1">9:52 AM</p>
-          </div>
-        </div>
+        ))}
+        {/* Add a div to track the bottom of the messages */}
+        <div ref={messagesEndRef} />
       </div>
-
 
       <div className="flex items-center gap-3 px-4 py-3 bg-white shadow-md">
         <input
@@ -178,6 +161,7 @@ const Chatbox = () => {
           placeholder="Send a message..."
           onChange={(e) => setInput(e.target.value)}
           value={input}
+          onKeyDown={handleKeyPress}
         />
         <button
           className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors text-white"

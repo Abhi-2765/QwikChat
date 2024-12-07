@@ -51,56 +51,7 @@ const ProfilePopUp = (props) => {
         <div className="text-sm">
           <p className="font-bold text-gray-300">Media</p>
           <div className="flex flex-wrap gap-2 mt-3 max-h-40 overflow-y-scroll">
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
-            <img
-              className="w-20 h-20 object-cover cursor-pointer hover:opacity-90"
-              src={nature}
-              alt="Media"
-            />
+            {/* In future */}
           </div>
         </div>
 
