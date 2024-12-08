@@ -1,6 +1,5 @@
 import React, { useContext, useState } from 'react';
 import defUser from '../assets/default.png';
-import nature from '../assets/nature.jpg';
 import { AppContext } from '../Context/AppContext';
 
 const ProfilePopUp = (props) => {
