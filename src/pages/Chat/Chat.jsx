@@ -8,7 +8,7 @@ const Chat = () => {
   const {chatData, userData} = useContext(AppContext);
   const [loading, setLoading] = useState(true);
 
-  useEffect(()=>{ 
+  useEffect(()=>{
     if(chatData && userData){
       setLoading(false);
     }
