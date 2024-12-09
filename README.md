@@ -4,7 +4,7 @@
 
 ## 🚀 Live Demo
 
-Check out the live version of the app here: [Qwik Chat](https://qwik-chat-eight.vercel.app/chat)
+Check out the live version of the app here: [Qwik Chat](https://qwik-chat-eight.vercel.app/)
 
 ## 🛠️ Features
 
